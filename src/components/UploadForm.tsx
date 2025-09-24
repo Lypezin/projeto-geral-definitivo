@@ -6,6 +6,30 @@ import * as XLSX from 'xlsx';
 
 const CHUNK_SIZE = 1000; // Process 1000 rows at a time
 
+// Define a type for the data imported from the Excel sheet
+interface ExcelRow {
+  data_do_periodo?: string;
+  periodo?: string;
+  duracao_do_periodo?: number;
+  numero_minimo_de_entregadores_regulares_na_escala?: number;
+  tag?: string;
+  id_da_pessoa_entregadora?: string;
+  pessoa_entregadora?: string;
+  praca?: string;
+  sub_praca?: string;
+  origem?: string;
+  tempo_disponivel_escalado?: number;
+  tempo_disponivel_absoluto?: number;
+  numero_de_corridas_ofertadas?: number;
+  numero_de_corridas_aceitas?: number;
+  numero_de_corridas_rejeitadas?: number;
+  numero_de_corridas_completadas?: number;
+  numero_de_corridas_canceladas_pela_pessoa_entregadora?: number;
+  numero_de_pedidos_aceitos_e_concluidos?: number;
+  soma_das_taxas_das_corridas_aceitas?: number;
+  [key: string]: string | number | undefined; // Allow other keys
+}
+
 export default function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -42,7 +66,7 @@ export default function UploadForm({ onUploadSuccess }: { onUploadSuccess: () =>
         const worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
-        const mappedData = json.map((row: any) => ({
+        const mappedData = (json as ExcelRow[]).map((row) => ({
           data_do_periodo: row['data_do_periodo'],
           periodo: row['periodo'],
           duracao_do_periodo: row['duracao_do_periodo'],
@@ -79,8 +103,9 @@ export default function UploadForm({ onUploadSuccess }: { onUploadSuccess: () =>
 
         setSuccess(`Arquivo com ${mappedData.length} linhas importado com sucesso!`);
         onUploadSuccess(); // Refresh data on dashboard
-      } catch (err: any) {
-        setError(`Erro ao importar o arquivo: ${err.message}`);
+      } catch (err) {
+        const error = err as Error;
+        setError(`Erro ao importar o arquivo: ${error.message}`);
       } finally {
         setUploading(false);
       }
